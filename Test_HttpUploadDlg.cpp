@@ -185,7 +185,11 @@ std::wstring ErrorMessage(DWORD dwMessageId)
 #include <sstream>
 void CTestHttpUploadDlg::OnBnClickedOk()
 {
-	HttpUploadFile2(L"http://54.180.43.235:4300/rest/saveImage", L"c:\\scpark\\media\\test_image\\HongKKonDai.jpg");
+	//HttpUploadFile(L"http://54.180.43.235:4300/rest/saveImage", L"c:\\scpark\\media\\test_image\\HongKKonDai.jpg");
+	if (HttpUploadFile(_T("http://54.180.43.235:4300/rest/saveImage"), _T("c:\\scpark\\media\\test_image\\idol.jpg"), 6340))
+		AfxMessageBox(_T("Upload success."));
+	else
+		AfxMessageBox(_T("Upload failed."));
 #if 0
 	DWORD dwSize = 0;
 	LPVOID lpOutBuffer = NULL;
@@ -396,9 +400,20 @@ void CTestHttpUploadDlg::OnBnClickedOk()
  * @param pszFilePath 업로드 파일 full path
  * @returns 성공하면 true 를 리턴하고 그렇지 않으면 false 를 리턴한다.
  */
-bool CTestHttpUploadDlg::HttpUploadFile2(WCHAR* pszUrl, WCHAR* pszFilePath)
+bool CTestHttpUploadDlg::HttpUploadFile(CString url, CString filepath, int chatIndex)
 {
 	bool bRes = false;
+
+	USES_CONVERSION;
+
+	WCHAR* pszUrl;
+	WCHAR* pszFilePath;
+	
+//#ifdef _UNICODE
+//	pszUrl = url;
+
+	pszUrl = T2W(url);
+	pszFilePath = T2W(filepath);
 
 	// pszUrl 에서 host, path 를 가져온다.
 	WCHAR* pszHost = NULL;
@@ -467,10 +482,10 @@ bool CTestHttpUploadDlg::HttpUploadFile2(WCHAR* pszUrl, WCHAR* pszFilePath)
 		CInternetSession clsSession;
 
 		// HTTP 연결하고 파일을 전송한다.
-		CHttpConnection* pclsHttpConn = clsSession.GetHttpConnection(strHost.c_str(), dwFlag, (INTERNET_PORT)iPort, NULL, NULL);
+		CHttpConnection* pclsHttpConn = clsSession.GetHttpConnection(CString(strHost.c_str()), dwFlag, (INTERNET_PORT)iPort, NULL, NULL);
 		if (pclsHttpConn)
 		{
-			CHttpFile* pclsHttpFile = pclsHttpConn->OpenRequest(CHttpConnection::HTTP_VERB_POST, pszPath);
+			CHttpFile* pclsHttpFile = pclsHttpConn->OpenRequest(CHttpConnection::HTTP_VERB_POST, CString(pszPath));
 			if (pclsHttpFile)
 			{
 				USES_CONVERSION;
@@ -478,39 +493,29 @@ bool CTestHttpUploadDlg::HttpUploadFile2(WCHAR* pszUrl, WCHAR* pszFilePath)
 
 				// HTTP 요청 header 를 생성한다.
 				std::wstring strContentType = L"Content-Type: multipart/form-data; boundary=";
-				strContentType.append(A2T(strBoundary.c_str()));
+				//strContentType.append(A2T(strBoundary.c_str()));
+				strContentType.append(strBoundary.begin(), strBoundary.end());
 				strContentType.append(L"\r\n");
-				pclsHttpFile->AddRequestHeaders(strContentType.c_str());
+				pclsHttpFile->AddRequestHeaders(CString(strContentType.c_str()));// .c_str());
 				
 				std::string strBody;
-				/*
-				// body 에 ID 정보를 저장한다.
-				strBody.append("--");
-				strBody.append(strBoundary);
-				strBody.append("\r\n");
-				strBody.append("Content-Disposition: form-data; name=\"id\"\r\n\r\n");
-				strBody.append("id1\r\n");
+				std::string strChatIndex = std::to_string(chatIndex);
 
-				// body 에 비밀번호 정보를 저장한다.
-				strBody.append("--");
-				strBody.append(strBoundary);
-				strBody.append("\r\n");
-				strBody.append("Content-Disposition: form-data; name=\"pw\"\r\n\r\n");
-				strBody.append("pw1\r\n");
-				*/
-				// body 에 비밀번호 정보를 저장한다.
+				// body에 chatIdx를 저장한다.
 				strBody.append("--");
 				strBody.append(strBoundary);
 				strBody.append("\r\n");
 				strBody.append("Content-Disposition: form-data; name=\"chatIdx\"\r\n\r\n");
-				strBody.append("6330\r\n");
+				strBody.append(strChatIndex);
+				strBody.append("\r\n");
 
-				// body 에 파일을 저장한다.
+				// body에 파일명을 저장한다.
 				strBody.append("--");
 				strBody.append(strBoundary);
 				strBody.append("\r\n");
 				strBody.append("Content-Disposition: form-data; name=\"image\"; filename=\"");
-				strBody.append(T2A(pszFileName));
+				std::wstring filename(pszFilePath);
+				strBody.append(filename.begin(), filename.end());
 				strBody.append("\"\r\nContent-Type: application/octet-stream\r\n\r\n");
 
 				while (1)

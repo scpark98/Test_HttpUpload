@@ -12,7 +12,8 @@ class CTestHttpUploadDlg : public CDialogEx
 public:
 	CTestHttpUploadDlg(CWnd* pParent = nullptr);	// 표준 생성자입니다.
 
-	bool HttpUploadFile2(WCHAR* pszUrl, WCHAR* pszFilePath);
+	//bool HttpUploadFile2(WCHAR* pszUrl, WCHAR* pszFilePath);
+	bool HttpUploadFile(CString url, CString filepath, int chatIndex);
 
 // 대화 상자 데이터입니다.
 #ifdef AFX_DESIGN_TIME
